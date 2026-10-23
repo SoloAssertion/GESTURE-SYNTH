@@ -289,7 +289,7 @@ export default function App() {
         <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-3.5 text-xs font-normal leading-relaxed text-slate-300 backdrop-blur-xl">
           <span className="font-semibold text-slate-200 mr-1.5 uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/10">Guide</span>
           {isG
-            ? 'Left hand picks chord scale & degree (1–5 fingers, tilt right for minor). Right hand controls style (1=pad, 2=arpeggio, 3+=pulse, fist=mute) and volume altitude.'
+            ? 'Left hand picks chord scale & degree (1–5 fingers, tilt right for minor). Right hand controls style (1=Pad, 2=Arpeggio, 3+=Pulse, fist=Mute) and volume altitude.'
             : 'Move hand across X-axis for notes, Y-axis for brightness/volume. Pinch thumb and index tip together to play notes.'}
         </div>
 
