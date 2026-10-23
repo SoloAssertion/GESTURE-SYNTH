@@ -251,29 +251,33 @@ export default function App() {
   const running = status === 'running'
   const isG = mode === 'gesture'
 
-  return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-8 antialiased selection:bg-slate-700 selection:text-white">
-      {/* Subtle ambient lighting blobs */}
-      <div className="pointer-events-none absolute -left-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-indigo-950/20 blur-[120px] animate-float-slow" />
-      <div className="pointer-events-none absolute -bottom-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-slate-900/30 blur-[120px] animate-float-reverse" />
+    return (
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-[#030307] px-4 py-6 text-slate-100 antialiased selection:bg-slate-700 selection:text-white">
+      
+      {/* Siri-style Background Blobs Fixed to Viewport */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+        <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-purple-600/25 blur-[120px] animate-pulse" />
+        <div className="absolute top-1/2 -right-40 h-[30rem] w-[30rem] rounded-full bg-cyan-500/20 blur-[120px] animate-pulse delay-1000" />
+        <div className="absolute -bottom-40 left-1/3 h-[30rem] w-[30rem] rounded-full bg-pink-500/20 blur-[120px] animate-pulse delay-500" />
+      </div>
 
-      <main className="relative mx-auto max-w-3xl">
-        {/* Header Navigation */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-500/45 via-fuchsia-600/40 to-violet-400">
+      <main className="relative z-10 mx-auto max-w-3xl flex flex-col gap-4">
+        {/* Header Navigation - Flex-row with no-wrap so title stays on one line */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col">
+            <h1 className="font-display whitespace-nowrap bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-violet-400 bg-clip-text text-2xl sm:text-3xl font-extrabold tracking-tight text-transparent drop-shadow-sm">
               Gesture Synth
-           </h1>
-            <p className="text-xs font-medium text-slate-400 mt-0.5">Spatial Computer Music Engine</p>
+            </h1>
+            <p className="text-[11px] font-medium text-slate-400">Spatial Computer Music Engine</p>
           </div>
           
           {/* Minimal Frosted Tab Switcher */}
-          <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur-xl">
+          <div className="flex shrink-0 gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur-xl">
             {['gesture', 'theremin'].map((m) => (
               <button
                 key={m}
                 onClick={() => switchMode(m)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium capitalize transition-all duration-200 ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-medium capitalize transition-all duration-200 ${
                   mode === m 
                     ? 'bg-white/15 text-white shadow-sm' 
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -286,7 +290,7 @@ export default function App() {
         </div>
 
         {/* Info Banner */}
-        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-3.5 text-xs font-normal leading-relaxed text-slate-300 backdrop-blur-xl">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-xs font-normal leading-relaxed text-slate-300 backdrop-blur-xl">
           <span className="font-semibold text-slate-200 mr-1.5 uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/10">Guide</span>
           {isG
             ? 'Left hand picks chord scale & degree (1–5 fingers, tilt right for minor). Right hand controls style (1=Pad, 2=Arpeggio, 3+=Pulse, fist=Mute) and volume altitude.'
@@ -294,7 +298,7 @@ export default function App() {
         </div>
 
         {/* Main Viewport Box */}
-        <section className="relative mt-5 aspect-[4/3] overflow-hidden rounded-[24px] border border-white/10 bg-[#07070c] shadow-2xl backdrop-blur-2xl">
+        <section className="relative aspect-[4/3] w-full overflow-hidden rounded-[24px] border border-white/10 bg-[#07070c] shadow-2xl backdrop-blur-2xl">
           <video ref={videoRef} playsInline muted className="pointer-events-none absolute h-px w-px opacity-0" />
           <canvas ref={canvasRef} width={640} height={480} className="h-full w-full -scale-x-100 object-cover opacity-90" />
 
@@ -314,7 +318,7 @@ export default function App() {
               </div>
 
               <div className="text-center">
-                <div className="font-display text-7xl font-black tracking-tight text-white drop-shadow-md">
+                <div className="font-display text-6xl sm:text-7xl font-black tracking-tight text-white drop-shadow-md">
                   {hud.roman || '–'}
                 </div>
                 <div className="text-xs font-medium text-slate-300 mt-1 tracking-wide">
@@ -373,20 +377,19 @@ export default function App() {
 
           {/* Idle / Loading / Error State View */}
           {!running && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#05050a]/90 p-6 text-center backdrop-blur-xl">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#05050a]/90 p-6 text-center backdrop-blur-xl">
               {status === 'loading' ? (
                 <div className="flex flex-col items-center gap-3">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
                   <p className="text-sm font-medium text-slate-300">Initializing hand tracker & audio engine…</p>
                 </div>
               ) : (
-                <div className="max-w-sm space-y-4">
+                <div className="max-w-sm space-y-3">
                   {error && (
                     <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200 leading-relaxed">
                       {error}
                     </div>
                   )}
-                  {/* Clean Minimal Action Button */}
                   <button
                     onClick={start}
                     className="group relative inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-7 py-3 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md transition-all duration-200 hover:bg-white/20 hover:border-white/30 active:scale-95"
