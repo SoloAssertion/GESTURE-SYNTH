@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import * as Tone from 'tone'
 import { chordFor, degreeFor, fingers, HINTS, STYLES } from './gesture.js'
 
-// MediaPipe's browser builds load from the CDN at runtime (the npm packages
-// don't bundle cleanly with Vite). Versions are pinned.
+// MediaPipe's browser builds load from the CDN at runtime
 const HANDS_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240'
 const CAMERA_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js'
 
-const NOTES = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5'] // theremin scale
+const NOTES = ['C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'D5', 'E5', 'G5', 'A5']
 const PINCH_ON = 0.3
 const PINCH_OFF = 0.45
 const ARP = [0, 1, 2, 1]
@@ -64,14 +63,14 @@ export default function App() {
   const audioRef = useRef(null)
   const modeRef = useRef('gesture')
   const hudT = useRef(0)
-  const [mode, setMode] = useState('gesture') // gesture | theremin
-  const [status, setStatus] = useState('idle') // idle | loading | running | error
+  const [mode, setMode] = useState('gesture')
+  const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
   const [hud, setHud] = useState(EMPTY)
 
   const publish = (obj) => {
     const t = performance.now()
-    if (t - hudT.current > 100) { // ~10 UI updates/sec keeps rendering light
+    if (t - hudT.current > 100) {
       hudT.current = t
       setHud(obj)
     }
@@ -115,7 +114,7 @@ export default function App() {
     }
   }
 
-  useEffect(() => teardown, []) // stop camera, MediaPipe and audio on unmount
+  useEffect(() => teardown, [])
 
   const draw = (ctx, lm, w, h, pinchLine) => {
     ctx.lineWidth = 3
@@ -142,11 +141,11 @@ export default function App() {
   }
 
   const theremin = (a, lm) => {
-    const x = clamp(1 - lm[8].x) // video is mirrored, so flip x
+    const x = clamp(1 - lm[8].x)
     const y = clamp(lm[8].y)
     const lane = Math.min(NOTES.length - 1, Math.floor(x * NOTES.length))
     const note = NOTES[lane]
-    const ratio = dist(lm[4], lm[8]) / dist(lm[0], lm[9]) // normalised by palm size
+    const ratio = dist(lm[4], lm[8]) / dist(lm[0], lm[9])
     const level = 1 - y
     a.filter.frequency.rampTo(200 * Math.pow(30, level), 0.05)
     a.synth.volume.rampTo(-30 + level * 24, 0.05)
@@ -158,7 +157,6 @@ export default function App() {
 
   const gesture = (a, hands) => {
     const g = a.g
-    // Mirrored view: the hand with the larger raw x is on the screen's left.
     const sorted = [...hands].sort((p, q) => q[0].x - p[0].x)
     const L = hands.length === 2 ? sorted[0] : sorted[0][0].x > 0.5 ? sorted[0] : null
     const R = hands.length === 2 ? sorted[1] : sorted[0][0].x > 0.5 ? null : sorted[0]
@@ -166,10 +164,10 @@ export default function App() {
     const raw = L ? degreeFor(fingers(L)) : -1
     if (raw === g.cand) g.n++
     else { g.cand = raw; g.n = 1 }
-    if (g.n >= 3) g.deg = raw // pose must hold for 3 frames, avoids flicker
+    if (g.n >= 3) g.deg = raw
 
     if (L) {
-      const tilt = -Math.atan2(L[9].x - L[0].x, L[0].y - L[9].y) * (180 / Math.PI) // + = leaning screen-right
+      const tilt = -Math.atan2(L[9].x - L[0].x, L[0].y - L[9].y) * (180 / Math.PI)
       if (tilt > 25) g.scale = 'minor'
       else if (tilt < 10) g.scale = 'major'
     }
@@ -180,7 +178,7 @@ export default function App() {
       const n = fingers(R).slice(1).filter(Boolean).length
       g.style = n === 0 ? 0 : n === 1 ? 1 : n === 2 ? 2 : 3
       vol = 1 - clamp(R[9].y)
-    } else g.style = 1 // one-handed play defaults to pad
+    } else g.style = 1
     a.poly.volume.rampTo(-30 + vol * 22, 0.1)
 
     const want = g.style === 1 && g.chord ? g.chord.notes : null
@@ -220,7 +218,7 @@ export default function App() {
     setError('')
     setStatus('loading')
     try {
-      await Tone.start() // must run inside the click handler
+      await Tone.start()
       audioRef.current = buildAudio()
       await Promise.all([loadScript(`${HANDS_URL}/hands.js`), loadScript(CAMERA_URL)])
 
@@ -254,21 +252,32 @@ export default function App() {
   const isG = mode === 'gesture'
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-6">
-      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-fuchsia-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-cyan-500/25 blur-3xl" />
+    <div className="relative min-h-screen overflow-hidden px-4 py-8 antialiased selection:bg-slate-700 selection:text-white">
+      {/* Subtle ambient lighting blobs */}
+      <div className="pointer-events-none absolute -left-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-indigo-950/20 blur-[120px] animate-float-slow" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-[32rem] w-[32rem] rounded-full bg-slate-900/30 blur-[120px] animate-float-reverse" />
 
       <main className="relative mx-auto max-w-3xl">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="bg-gradient-to-r from-cyan-300 via-fuchsia-400 to-violet-400 bg-clip-text text-3xl font-bold text-transparent">
-            Hand Synth
-          </h1>
-          <div className="flex gap-1 rounded-full border border-white/10 bg-white/5 p-1 text-sm backdrop-blur-xl">
+        {/* Header Navigation */}
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-500/45 via-fuchsia-600/40 to-violet-400">
+              Gesture Synth
+           </h1>
+            <p className="text-xs font-medium text-slate-400 mt-0.5">Spatial Computer Music Engine</p>
+          </div>
+          
+          {/* Minimal Frosted Tab Switcher */}
+          <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur-xl">
             {['gesture', 'theremin'].map((m) => (
               <button
                 key={m}
                 onClick={() => switchMode(m)}
-                className={`rounded-full px-4 py-1.5 capitalize transition ${mode === m ? 'bg-gradient-to-r from-cyan-400 to-fuchsia-500 text-slate-950' : 'text-slate-300'}`}
+                className={`rounded-full px-4 py-1.5 text-xs font-medium capitalize transition-all duration-200 ${
+                  mode === m 
+                    ? 'bg-white/15 text-white shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
               >
                 {m}
               </button>
@@ -276,39 +285,59 @@ export default function App() {
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm text-slate-300 backdrop-blur-xl">
+        {/* Info Banner */}
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-3.5 text-xs font-normal leading-relaxed text-slate-300 backdrop-blur-xl">
+          <span className="font-semibold text-slate-200 mr-1.5 uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-md bg-white/10 border border-white/10">Guide</span>
           {isG
-            ? 'Left hand picks the chord: hold up 1–5 fingers, index + pinky, or index + middle + pinky. Tilt it right for minor, upright for major. Right hand sets the style (1 finger pad, 2 arpeggio, 3+ pulse, fist mute) and its height sets the volume.'
-            : 'Move your hand left and right to change notes. Raise it for a brighter, louder sound. Pinch your thumb and index finger to play, and open them to release.'}
+            ? 'Left hand picks chord scale & degree (1–5 fingers, tilt right for minor). Right hand controls style (1=pad, 2=arpeggio, 3+=pulse, fist=mute) and volume altitude.'
+            : 'Move hand across X-axis for notes, Y-axis for brightness/volume. Pinch thumb and index tip together to play notes.'}
         </div>
 
-        <section className="relative mt-4 aspect-[4/3] overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-[0_0_60px_-15px_rgba(217,70,239,0.5)]">
+        {/* Main Viewport Box */}
+        <section className="relative mt-5 aspect-[4/3] overflow-hidden rounded-[24px] border border-white/10 bg-[#07070c] shadow-2xl backdrop-blur-2xl">
           <video ref={videoRef} playsInline muted className="pointer-events-none absolute h-px w-px opacity-0" />
-          <canvas ref={canvasRef} width={640} height={480} className="h-full w-full -scale-x-100 object-cover" />
+          <canvas ref={canvasRef} width={640} height={480} className="h-full w-full -scale-x-100 object-cover opacity-90" />
 
+          {/* Gesture Mode HUD Overlay */}
           {running && isG && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-3">
+            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-4 bg-gradient-to-b from-black/40 via-transparent to-black/60">
               <div className="flex items-start justify-between text-xs">
-                <span className="rounded-full bg-black/50 px-3 py-1">G {hud.scale}</span>
-                <div className="w-28 rounded-xl bg-black/50 px-3 py-1.5">
-                  <div>{STYLES[hud.style]}</div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/15">
-                    <div className="h-full bg-gradient-to-r from-cyan-400 to-fuchsia-500" style={{ width: `${hud.vol * 100}%` }} />
+                <span className="rounded-full border border-white/10 bg-black/40 px-3.5 py-1.5 font-medium tracking-wide text-cyan-200 backdrop-blur-md">
+                  Key: <strong className="text-white uppercase">G {hud.scale}</strong>
+                </span>
+                <div className="w-32 rounded-2xl border border-white/10 bg-black/40 px-3.5 py-2 backdrop-blur-md">
+                  <div className="text-[11px] font-medium text-slate-300">{STYLES[hud.style]}</div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div className="h-full bg-cyan-400 transition-all duration-150" style={{ width: `${hud.vol * 100}%` }} />
                   </div>
                 </div>
               </div>
+
               <div className="text-center">
-                <div className="text-7xl font-bold text-cyan-300 drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]">{hud.roman || '–'}</div>
-                <div className="text-sm text-white/80">{hud.name ? `${hud.name} ${hud.quality}` : 'Show a left-hand pose'}</div>
+                <div className="font-display text-7xl font-black tracking-tight text-white drop-shadow-md">
+                  {hud.roman || '–'}
+                </div>
+                <div className="text-xs font-medium text-slate-300 mt-1 tracking-wide">
+                  {hud.name ? `${hud.name} ${hud.quality}` : 'Show a left-hand pose'}
+                </div>
               </div>
-              <div className="flex gap-1">
+
+              <div className="flex gap-1.5">
                 {[0, 1, 2, 3, 4, 5, 6].map((i) => {
                   const c = chordFor(hud.scale, i)
+                  const active = hud.deg === i
                   return (
-                    <div key={i} className={`flex-1 rounded-lg border px-1 py-1.5 text-center ${hud.deg === i ? 'border-fuchsia-400 bg-fuchsia-500/30 text-white' : 'border-white/10 bg-black/50 text-slate-300'}`}>
-                      <div className="text-sm font-semibold">{c.name}</div>
-                      <div className="text-[10px]">{c.roman}</div>
-                      <div className="text-[9px] text-slate-400">{HINTS[i]}</div>
+                    <div 
+                      key={i} 
+                      className={`flex-1 rounded-xl border px-1 py-2 text-center transition-all backdrop-blur-md ${
+                        active 
+                          ? 'border-white/30 bg-white/15 text-white shadow-sm' 
+                          : 'border-white/5 bg-black/40 text-slate-400'
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-slate-200">{c.name}</div>
+                      <div className="text-[10px] font-semibold text-cyan-300">{c.roman}</div>
+                      <div className="text-[9px] text-slate-500 mt-0.5">{HINTS[i]}</div>
                     </div>
                   )
                 })}
@@ -316,35 +345,56 @@ export default function App() {
             </div>
           )}
 
+          {/* Theremin Mode HUD Overlay */}
           {running && !isG && (
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
-              <div className="m-3 self-start rounded-full bg-black/50 px-3 py-1 font-mono text-xs">
+            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between bg-gradient-to-b from-black/30 via-transparent to-black/50">
+              <div className="m-4 self-start rounded-full border border-white/10 bg-black/40 px-4 py-1.5 font-mono text-xs text-cyan-200 backdrop-blur-md">
                 {hud.tracking ? `${hud.note} · ${hud.freq.toFixed(1)} Hz · x ${hud.x.toFixed(2)} y ${hud.y.toFixed(2)}` : 'Show your hand'}
               </div>
               <div className="flex h-1/3">
-                {NOTES.map((n, i) => (
-                  <div key={i} className={`flex flex-1 items-end justify-center border-l border-white/10 pb-2 text-xs ${hud.lane === i ? (hud.playing ? 'bg-fuchsia-500/30 text-white' : 'bg-cyan-400/15 text-cyan-200') : 'text-white/40'}`}>
-                    {n}
-                  </div>
-                ))}
+                {NOTES.map((n, i) => {
+                  const active = hud.lane === i
+                  return (
+                    <div 
+                      key={i} 
+                      className={`flex flex-1 items-end justify-center border-l border-white/10 pb-3 text-xs font-semibold transition-colors ${
+                        active 
+                          ? (hud.playing ? 'bg-white/20 text-white border-white/30' : 'bg-white/10 text-cyan-200') 
+                          : 'text-white/30 hover:text-white/50'
+                      }`}
+                    >
+                      {n}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
 
+          {/* Idle / Loading / Error State View */}
           {!running && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/40 p-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 bg-[#05050a]/90 p-6 text-center backdrop-blur-xl">
               {status === 'loading' ? (
-                <p className="text-slate-300">Loading hand tracking and starting the camera…</p>
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
+                  <p className="text-sm font-medium text-slate-300">Initializing hand tracker & audio engine…</p>
+                </div>
               ) : (
-                <>
-                  {error && <p className="max-w-sm text-sm text-rose-300">{error}</p>}
+                <div className="max-w-sm space-y-4">
+                  {error && (
+                    <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200 leading-relaxed">
+                      {error}
+                    </div>
+                  )}
+                  {/* Clean Minimal Action Button */}
                   <button
                     onClick={start}
-                    className="rounded-full bg-gradient-to-r from-cyan-400 to-fuchsia-500 px-8 py-3 font-semibold text-slate-950 shadow-[0_0_30px_rgba(217,70,239,0.6)] transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    className="group relative inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-7 py-3 text-xs font-semibold uppercase tracking-wider text-white backdrop-blur-md transition-all duration-200 hover:bg-white/20 hover:border-white/30 active:scale-95"
                   >
-                    {status === 'error' ? 'Try again' : 'Start audio and camera'}
+                    <span>{status === 'error' ? 'Try Again' : 'Start Audio & Camera'}</span>
                   </button>
-                </>
+                  <p className="text-[11px] text-slate-500">Requires camera permissions. Runs 100% locally in your browser.</p>
+                </div>
               )}
             </div>
           )}
